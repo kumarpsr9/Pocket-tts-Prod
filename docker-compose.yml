@@ -1,0 +1,13 @@
+services:
+  pocket-tts:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: pocket-tts
+    tty: true
+    volumes:
+        -  ${PWD}/output:/app/output
+    ports:
+        - 8000:8000
+    restart: unless-stopped
+
