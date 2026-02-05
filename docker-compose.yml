@@ -12,4 +12,12 @@ services:
     ports:
         - 8000:8000
     restart: unless-stopped
-
+  nginx:
+    image: nginx:latest
+    ports:
+      - 8086:80
+    restart: always
+    tty: true
+    volumes:
+      - ${PWD}/nginx/conf.d:/etc/nginx/conf.d/
+      - ${PWD}/output:/usr/share/nginx/html/output

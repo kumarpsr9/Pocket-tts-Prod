@@ -23,11 +23,22 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],      # tighten in prod
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["*"]
 )
+
+
+def boost_volume(audio_np: np.ndarray, gain: float = 2.0) -> np.ndarray:
+    """
+    Increase volume safely with clipping protection.
+    gain=2.0 -> 200% volume (~ +6 dB)
+    """
+    #audio_np = audio_np * gain
+    audio_np *= (0.99 / np.max(np.abs(audio_np)))
+    audio_np = audio_np * gain
+    return np.clip(audio_np, -1.0, 1.0)
 
 # =====================================================
 # Global model & cache
@@ -145,6 +156,7 @@ def generate_tts_and_save(req: TTSSaveRequest):
             )
 
         audio_np = audio.cpu().numpy().astype(np.float32)
+        audio_np = boost_volume(audio_np, gain=2.0)
 
         save_dir = Path("output") / req.folder_name
         save_dir.mkdir(parents=True, exist_ok=True)
@@ -156,13 +168,14 @@ def generate_tts_and_save(req: TTSSaveRequest):
             audio_np,
             tts_model.sample_rate,
             format="MP3"
+            
         )
 
         return {
             "status": "success",
             "id": req.id,
             "voice": req.voice,
-            "file_path": str(mp3_path.resolve())
+            "file_path": mp3_path
         }
 
     except Exception as e:
