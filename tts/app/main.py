@@ -9,6 +9,7 @@ import tempfile
 from pathlib import Path
 import torch
 from typing import Dict
+import librosa
 
 torch.inference_mode = torch.no_grad
 
@@ -29,6 +30,20 @@ app.add_middleware(
     allow_headers=["*"]
 )
 
+
+def slow_down_audio(
+    audio: np.ndarray,
+    rate: float = 0.85,
+) -> np.ndarray:
+    """
+    Slow down audio without changing pitch.
+    rate < 1.0  -> slower speech
+    rate = 0.85 -> ~15% slower (recommended)
+    """
+    if audio.ndim > 1:
+        audio = audio.squeeze()
+
+    return librosa.effects.time_stretch(audio, rate=rate)
 
 def boost_volume(audio_np: np.ndarray, gain: float = 2.0) -> np.ndarray:
     """
@@ -156,6 +171,8 @@ def generate_tts_and_save(req: TTSSaveRequest):
             )
 
         audio_np = audio.cpu().numpy().astype(np.float32)
+        # Slow down speech
+        #audio_np = slow_down_audio(audio_np, rate=0.90)
         audio_np = boost_volume(audio_np, gain=2.0)
 
         save_dir = Path("output") / req.folder_name
