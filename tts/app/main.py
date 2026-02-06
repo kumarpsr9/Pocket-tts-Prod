@@ -72,7 +72,7 @@ def warmup_model():
     tts_model = TTSModel.load_model()
 
     # -------- Preload voice embeddings --------
-    preload_voices = ["eponine"]
+    preload_voices = ["clone.wav"]
 
     for voice in preload_voices:
         VOICE_CACHE[voice] = tts_model.get_state_for_audio_prompt(voice)
@@ -80,7 +80,7 @@ def warmup_model():
     # -------- Warm-up inference (VERY IMPORTANT) --------
     with torch.inference_mode():
         tts_model.generate_audio(
-            VOICE_CACHE["eponine"],
+            VOICE_CACHE["clone.wav"],
             "warmup"
         )
 
@@ -92,14 +92,14 @@ def warmup_model():
 class TTSRequest(BaseModel):
     id: str = Field(..., example="sample_001")
     text: str = Field(..., example="Hello, welcome to Pocket TTS")
-    voice: str = Field(default="eponine", example="eponine")
+    voice: str = Field(default="clone.wav", example="clone.wav")
 
 
 class TTSSaveRequest(BaseModel):
     id: str = Field(..., example="welcome_001")
     text: str = Field(..., example="Welcome to Pocket TTS API")
     folder_name: str = Field(..., example="announcements")
-    voice: str = Field(default="eponine", example="eponine")
+    voice: str = Field(default="clone.wav", example="clone.wav")
 
 # =====================================================
 # Health check
@@ -167,7 +167,7 @@ def generate_tts_and_save(req: TTSSaveRequest):
         with torch.inference_mode():
             audio = tts_model.generate_audio(
                 voice_state,
-                f"...{req.text}."
+                f".{req.text}."
             )
 
         audio_np = audio.cpu().numpy().astype(np.float32)
